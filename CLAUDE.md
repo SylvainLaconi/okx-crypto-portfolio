@@ -167,9 +167,13 @@ config mineure, dépendance) n'a pas besoin de ce cycle.
    plus rien à traiter, je commit en référençant l'identifiant du ticket (ex. `OKX-12`)
    dans le message de commit et la description de la PR, je push la branche sur GitHub, et
    je synchronise le ticket Linear (lien vers la branche/PR).
-9. **Merge.** Une fois la PR mergée, le ticket passe en `Done` automatiquement via une
-   GitHub Action déclenchée au merge (mise en place en M1 — CI). Je n'interviens plus
-   manuellement à cette étape.
+9. **Preview / QA.** Une fois la PR ouverte et l'environnement de preview déployé (branche
+   Neon + API Fly.io + frontend Vercel, cf. M3), le ticket passe automatiquement en `QA`
+   via une GitHub Action — c'est la fenêtre de validation manuelle de la preview avant merge.
+10. **Merge.** Une fois la PR mergée dans `main`, le ticket passe en `Done` automatiquement
+    et l'environnement de preview est détruit (branche Neon, app Fly, déploiement Vercel) —
+    automatisation mise en place en M1 (transition de statut) et M3 (déploiement/cleanup
+    preview). Je n'interviens plus manuellement à ces deux étapes.
 
 Pas de milestones Linear pour l'instant (pas de besoin réel identifié) — le projet
 `OKX Portfolio` reste plat.

@@ -37,3 +37,11 @@ découlent.
   fait manuellement par l'agent — à mettre en place en M1 (CI). Le reste du cycle
   (cadrage → ticket → branche → implémentation → auto-review → commit/push) reste manuel,
   cf. `CLAUDE.md` section 12.
+- **Nouveau statut d'équipe Linear `QA`** (catégorie *Started*, entre `In Progress` et
+  `Done`) — représente "branche déployée en preview, en attente de validation". Une GitHub
+  Action y bascule le ticket quand la preview (Neon + Fly + Vercel, M3) est déployée. Au
+  merge de la PR, le ticket passe en `Done` **et** l'environnement de preview est détruit
+  (branche Neon, app Fly, déploiement Vercel) — réutilise le cleanup déjà prévu en M3 sur
+  `pull_request: closed` ; la transition `Done` ne doit se déclencher que si
+  `github.event.pull_request.merged` est vrai (une fermeture sans merge ne doit pas
+  marquer le ticket comme terminé).
