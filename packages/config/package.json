@@ -8,13 +8,15 @@
     "./tsconfig.base.json": "./tsconfig.base.json"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
