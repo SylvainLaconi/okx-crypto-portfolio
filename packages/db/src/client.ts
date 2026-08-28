@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import * as schema from './schema.js';
 
 export function createDbClient(databaseUrl: string) {
-  const queryClient = postgres(databaseUrl);
+  const queryClient = postgres(databaseUrl, { connect_timeout: 5 });
   return drizzle(queryClient, { schema });
 }
 

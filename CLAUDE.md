@@ -108,6 +108,8 @@ Ciblé sur un workspace avec `--filter` :
 ## 9. Avant / après une modification
 
 Avant :
+- pour une feature (pas un fix trivial), passer par le cadrage puis la création du ticket
+  Linear — voir section 12 ;
 - comprendre le domaine concerné ;
 - inspecter les implémentations existantes ;
 - identifier les tests concernés.
@@ -130,3 +132,48 @@ Ne pas implémenter sans qu'on en discute d'abord :
 - intégration OKX (M8) ;
 - modèle de domaine / ledger / position engine (M7) ;
 - Redis, queues, workers (M10, seulement si un besoin réel apparaît).
+
+## 12. Intégration Linear
+
+Chaque feature suit un cycle **cadrage → ticket → implémentation**. Un fix trivial (typo,
+config mineure, dépendance) n'a pas besoin de ce cycle.
+
+1. **Cadrage.** On échange librement sur l'idée jusqu'à couvrir : objectif, comportement
+   attendu, architecture envisagée, cas limites, critères d'acceptation.
+2. **Validation.** Une fois le cadrage suffisant, je demande confirmation avant de créer
+   le ticket ("OK pour créer le ticket ?") — je ne crée jamais de ticket sans cette
+   confirmation explicite.
+3. **Création du ticket.** Équipe Linear `OKX Portfolio`, projet `OKX Portfolio`. Le ticket
+   contient :
+   - un titre court et actionnable ;
+   - une description structurée : Contexte / Critères d'acceptation / Principaux choix
+     techniques ;
+   - le label `Feature`, `Improvement` ou `Bug` selon la nature ;
+   - le statut initial `Todo`.
+
+   Je ne commence pas l'implémentation à ce stade.
+4. **Démarrage.** Tu m'indiques le code du ticket (ex. `OKX-12`). Je récupère son
+   `gitBranchName` Linear, crée la branche locale correspondante, puis passe le ticket en
+   `In Progress` — avant toute modification.
+5. **Cadrage technique.** J'analyse le code concerné puis passe en Plan Mode pour cadrer
+   techniquement la feature. Aucun fichier n'est encore modifié à ce stade.
+6. **Implémentation.** Une fois le plan validé, j'implémente conformément à ce plan et
+   lance lint/typecheck/tests pertinents. Je ne commit rien à ce stade.
+7. **Auto-review.** Je review le code modifié : bugs, régressions, cas limites, problèmes
+   d'architecture, tests manquants. Je ne modifie rien à cette étape. S'il y a des points à
+   corriger, on les valide ensemble un par un, je corrige, puis je relance l'auto-review —
+   et ainsi de suite jusqu'à ce qu'il n'y ait plus rien à traiter.
+8. **Commit & push.** Une fois que tu as toi-même reviewé les modifications et qu'il n'y a
+   plus rien à traiter, je commit en référençant l'identifiant du ticket (ex. `OKX-12`)
+   dans le message de commit et la description de la PR, je push la branche sur GitHub, et
+   je synchronise le ticket Linear (lien vers la branche/PR).
+9. **Preview / QA.** Une fois la PR ouverte et l'environnement de preview déployé (branche
+   Neon + API Fly.io + frontend Vercel, cf. M3), le ticket passe automatiquement en `QA`
+   via une GitHub Action — c'est la fenêtre de validation manuelle de la preview avant merge.
+10. **Merge.** Une fois la PR mergée dans `main`, le ticket passe en `Done` automatiquement
+    et l'environnement de preview est détruit (branche Neon, app Fly, déploiement Vercel) —
+    automatisation mise en place en M1 (transition de statut) et M3 (déploiement/cleanup
+    preview). Je n'interviens plus manuellement à ces deux étapes.
+
+Pas de milestones Linear pour l'instant (pas de besoin réel identifié) — le projet
+`OKX Portfolio` reste plat.
