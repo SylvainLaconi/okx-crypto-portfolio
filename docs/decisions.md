@@ -45,3 +45,32 @@ découlent.
   `pull_request: closed` ; la transition `Done` ne doit se déclencher que si
   `github.event.pull_request.merged` est vrai (une fermeture sans merge ne doit pas
   marquer le ticket comme terminé).
+
+## 2026-08-28 — CI et branch protections (M1, ticket OKX-7)
+
+- **Architecture CI/CD cible à 4 workflows** (`pr-ci`, `pr-preview`, `production`,
+  `pr-cleanup`), construite progressivement sur M1/M2/M3 plutôt que d'un coup : M1 n'introduit
+  que `pr-ci.yml` (lint/typecheck/test/build) et l'automatisation Linear ; `production.yml`
+  arrive en M2 avec l'infrastructure Neon/Fly/Vercel ; `pr-preview.yml`/`pr-cleanup.yml`
+  arrivent en M3 avec les previews par PR. Éviter d'anticiper cette structure finale en M1
+  pour ne pas construire des composants qui n'ont pas encore de cible réelle.
+- **`pr-ci.yml` : 4 jobs indépendants** (`lint`, `typecheck`, `test`, `build`), pas de
+  workflow réutilisable (`workflow_call`) pour l'instant — sera introduit en M2 quand
+  `production.yml` devra réexécuter les mêmes vérifications avant de déployer en
+  production, pour éviter la duplication.
+- **`linear-sync.yml` : passage en `Done` via `issueVcsBranchSearch`.** Cette query
+  GraphQL Linear est prévue précisément pour retrouver une issue à partir d'un nom de
+  branche Git, sans avoir à parser l'identifiant depuis le nom de branche à la main.
+  Nécessite un secret de repo `LINEAR_API_KEY` (clé API personnelle Linear).
+- **Branch protection sur `main` sans review obligatoire.** Projet solo — un auteur ne
+  peut pas approuver sa propre PR sur GitHub, donc exiger une review bloquerait tout
+  merge. Seuls les 4 status checks de `pr-ci.yml` sont requis.
+- **`enforce_admins: true`.** Aucune exception, y compris pour l'admin du repo (Sylvain) —
+  cohérent avec la règle CLAUDE.md "pas de push direct sur `main`" sans échappatoire,
+  volontairement strict pendant l'apprentissage du workflow.
+- **Repo GitHub passé en public.** Ni les branch protections classiques ni les rulesets ne
+  sont disponibles sur un repo privé avec le plan GitHub Free (`403 Upgrade to GitHub Pro`) —
+  seule option gratuite pour les activer. Le repo ne contient aujourd'hui aucun secret ni
+  donnée réelle (`.env` gitignoré, pas encore de ledger importé) ; à réévaluer avant
+  l'import de données personnelles réelles (M7, cf. section 9 du brief sur la
+  confidentialité).
