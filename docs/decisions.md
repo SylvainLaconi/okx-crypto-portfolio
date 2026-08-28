@@ -30,3 +30,10 @@ découlent.
 - **Neon branch et Fly app par PR** via `neondatabase/create-branch-action` et un
   `flyctl deploy` sur une app nommée dynamiquement (`api-pr-N`) — pas d'équivalent "review
   apps" natif sur Fly, donc c'est déjà l'option la plus simple disponible.
+
+## 2026-08-28 — Workflow Linear (ticket OKX-6)
+
+- **Passage du ticket en `Done` automatisé via GitHub Action au merge de la PR**, plutôt que
+  fait manuellement par l'agent — à mettre en place en M1 (CI). Le reste du cycle
+  (cadrage → ticket → branche → implémentation → auto-review → commit/push) reste manuel,
+  cf. `CLAUDE.md` section 12.

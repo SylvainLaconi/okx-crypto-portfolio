@@ -167,7 +167,9 @@ config mineure, dépendance) n'a pas besoin de ce cycle.
    plus rien à traiter, je commit en référençant l'identifiant du ticket (ex. `OKX-12`)
    dans le message de commit et la description de la PR, je push la branche sur GitHub, et
    je synchronise le ticket Linear (lien vers la branche/PR).
-9. **Merge.** Une fois la PR mergée, je passe le ticket en `Done`.
+9. **Merge.** Une fois la PR mergée, le ticket passe en `Done` automatiquement via une
+   GitHub Action déclenchée au merge (mise en place en M1 — CI). Je n'interviens plus
+   manuellement à cette étape.
 
 Pas de milestones Linear pour l'instant (pas de besoin réel identifié) — le projet
 `OKX Portfolio` reste plat.
