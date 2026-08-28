@@ -57,9 +57,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          state_query=$(jq -n --arg teamId "$TEAM_ID" '{
-            query: "query($teamId: String!) { workflowStates(filter: { team: { id: { eq: $teamId } }, name: { eq: \"Done\" } }) { nodes { id } } }",
-            variables: { teamId: $teamId }
+          state_query=$(jq -n '{
+            query: "{ workflowStates { nodes { id name team { id } } } }"
           }')
 
           state_response=$(curl -sf -X POST https://api.linear.app/graphql \
@@ -72,7 +71,8 @@ jobs:
             exit 1
           fi
 
-          state_id=$(echo "$state_response" | jq -r '.data.workflowStates.nodes[0].id // empty')
+          state_id=$(echo "$state_response" | jq -r --arg teamId "$TEAM_ID" \
+            '[.data.workflowStates.nodes[] | select(.team.id == $teamId and .name == "Done")][0].id // empty')
 
           if [ -z "$state_id" ]; then
             echo "No 'Done' workflow state found for team $TEAM_ID" >&2
