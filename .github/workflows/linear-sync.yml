@@ -1,0 +1,104 @@
+name: Linear sync
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  mark-done:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Linear issue from branch name
+        id: find_issue
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+
+          query=$(jq -n --arg branch "$BRANCH" '{
+            query: "query($branch: String!) { issueVcsBranchSearch(branchName: $branch) { id team { id } } }",
+            variables: { branch: $branch }
+          }')
+
+          response=$(curl -sf -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "$query")
+
+          if [ "$(echo "$response" | jq -r 'has("errors")')" = "true" ]; then
+            echo "Linear API returned errors: $response" >&2
+            exit 1
+          fi
+
+          issue_id=$(echo "$response" | jq -r '.data.issueVcsBranchSearch.id // empty')
+          team_id=$(echo "$response" | jq -r '.data.issueVcsBranchSearch.team.id // empty')
+
+          if [ -z "$issue_id" ]; then
+            echo "No Linear issue found for branch '$BRANCH', skipping."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "issue_id=$issue_id" >> "$GITHUB_OUTPUT"
+          echo "team_id=$team_id" >> "$GITHUB_OUTPUT"
+
+      - name: Move issue to Done
+        if: steps.find_issue.outputs.found == 'true'
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          ISSUE_ID: ${{ steps.find_issue.outputs.issue_id }}
+          TEAM_ID: ${{ steps.find_issue.outputs.team_id }}
+        run: |
+          set -euo pipefail
+
+          state_query=$(jq -n --arg teamId "$TEAM_ID" '{
+            query: "query($teamId: String!) { workflowStates(filter: { team: { id: { eq: $teamId } }, name: { eq: \"Done\" } }) { nodes { id } } }",
+            variables: { teamId: $teamId }
+          }')
+
+          state_response=$(curl -sf -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "$state_query")
+
+          if [ "$(echo "$state_response" | jq -r 'has("errors")')" = "true" ]; then
+            echo "Linear API returned errors: $state_response" >&2
+            exit 1
+          fi
+
+          state_id=$(echo "$state_response" | jq -r '.data.workflowStates.nodes[0].id // empty')
+
+          if [ -z "$state_id" ]; then
+            echo "No 'Done' workflow state found for team $TEAM_ID" >&2
+            exit 1
+          fi
+
+          mutation=$(jq -n --arg issueId "$ISSUE_ID" --arg stateId "$state_id" '{
+            query: "mutation($issueId: String!, $stateId: String!) { issueUpdate(id: $issueId, input: { stateId: $stateId }) { success } }",
+            variables: { issueId: $issueId, stateId: $stateId }
+          }')
+
+          update_response=$(curl -sf -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "$mutation")
+
+          if [ "$(echo "$update_response" | jq -r 'has("errors")')" = "true" ]; then
+            echo "Linear API returned errors: $update_response" >&2
+            exit 1
+          fi
+
+          success=$(echo "$update_response" | jq -r '.data.issueUpdate.success // false')
+
+          if [ "$success" != "true" ]; then
+            echo "Failed to update Linear issue: $update_response" >&2
+            exit 1
+          fi
+
+          echo "Linear issue $ISSUE_ID moved to Done."
