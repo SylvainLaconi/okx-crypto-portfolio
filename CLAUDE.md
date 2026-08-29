@@ -77,6 +77,11 @@ Ciblé sur un workspace avec `--filter` :
   une PR.
 - Ne jamais forcer un push ou réécrire l'historique d'une branche partagée.
 - Une branche par changement fonctionnel.
+- Avant de créer une branche (étape 4 du workflow Linear, section 12), toujours synchroniser
+  `main` local avec `origin/main` (`git fetch` + fast-forward) et brancher depuis cette base
+  à jour.
+- Si une branche se retrouve quand même en retard sur `main` (autre PR mergée entre-temps),
+  la remettre à jour avec `git merge origin/main` — jamais de rebase ni de force-push.
 
 ## 6. Stratégie de tests
 
